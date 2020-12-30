@@ -19,17 +19,17 @@ type call struct {
 }
 ```
 
-1.singleflight 是为了解决雪崩缓存穿透开发的工具,不到100行代码解决了一大对问题
-//该方法singleflight的具体实现
-Do
-//该方法singleflight的具体返回chan类型
-DoChan
-//Forget 丢掉响应的key
-Forget
-过去应用一些防止缓冲击穿雪崩的方法
+1.singleflight 是为了解决雪崩缓存穿透开发的工具,不到100行代码解决了一大对问题  
+//该方法singleflight的具体实现  
+Do  
+//该方法singleflight的具体返回chan类型  
+DoChan  
+//Forget 丢掉响应的key  
+Forget  
+过去应用一些防止缓冲击穿雪崩的方法  
 
-1.使用redis的SETNX 在设置过期时间的发放
-这种方法的缺陷：
-    *没法评估具体的过期时间，应该设置多少合适
-    *在线程等待时CPU空转，CPU利用率不高
-    *超时控制不好做
+1.使用redis的SETNX 在设置过期时间的发放  
+这种方法的缺陷  
+    *没法评估具体的过期时间，应该设置多少合适  
+    *在线程等待时CPU空转，CPU利用率不高  
+    *超时控制不好做  
