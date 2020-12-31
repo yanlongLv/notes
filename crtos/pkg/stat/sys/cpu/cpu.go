@@ -1,47 +1,37 @@
 package cpu
 
 import (
-	"path"
-	"strconv"
-	"strings"
+	"sync/atomic"
+	"time"
 )
 
-const cgroupRootDir = "/sys/fs/cgroup"
+const (
+	interval time.Duration = time.Microsecond * 500
+)
 
-type cgroup struct {
-	cgroupSet map[string]string
+var (
+	stats CPU
+	usage uint64
+)
+
+//CPU ..
+type CPU interface {
+	Usage() (u uint64, e error)
+	Info() Info
 }
 
-func (c *cgroup) CPUCFSQuotaUs() (int64, error) {
-	data, err := readFile(path.Join(c.cgroupSet["cpu"], "cpu.cfs_quota_us"))
-	if err != nil {
-		return 0, err
-	}
-	return strconv.ParseInt(data, 10, 64)
+//Stat ...
+type Stat struct {
+	Usage uint64
 }
 
-func (c *cgroup) CPUAcctUsage() (uint64, error) {
-	data, err := readFile(path.Join(c.cgroupSet["cpuacct"], "cpuacct.usage"))
-	if err != nil {
-		return 0, err
-	}
-	return parseUint(data)
+//Info ..
+type Info struct {
+	Frequency uint64
+	Quota     float64
 }
 
-func (c *cgroup) CPUAcctUsagePreCPU() ([]uint64, error) {
-	data, err := readFile(path.Join(c.cgroupSet["cpuacct"], "cpuacct.usage_percpu"))
-	if err != nil {
-		return nil, err
-	}
-	var usage []uint64
-	for _, v := range strings.Fields(string(data)) {
-		var u uint64
-		if u, err = parseUint(v); err != nil {
-			return nil, err
-		}
-		if u != 0 {
-			usage = append(usage, u)
-		}
-	}
-	return usage, nil
+//ReadStat ..
+func ReadStat(stat *Stat) {
+	stat.Usage = atomic.LoadUint64(&usage)
 }

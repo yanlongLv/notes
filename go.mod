@@ -2,4 +2,11 @@ module github.com/notes
 
 go 1.15
 
-require golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+require (
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/pkg/errors v0.9.1
+	github.com/rs/zerolog v1.20.0
+	github.com/shirou/gopsutil v3.20.11+incompatible // indirect
+	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+)
