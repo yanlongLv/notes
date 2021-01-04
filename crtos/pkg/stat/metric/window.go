@@ -31,3 +31,5 @@ func NewWindow(opts WindoeOpts) *Window {
 	}
 	return &Window{window: buckets, size: opts.Size}
 }
+
+func (w *Window)

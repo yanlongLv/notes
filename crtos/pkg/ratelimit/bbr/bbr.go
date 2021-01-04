@@ -72,4 +72,5 @@ func (l *BBR) maxPASS() int64 {
 	if rawMaxPass > 0 && l.passStat.Timespan() < 1 {
 		return rawMaxPass
 	}
+	rawMaxPass = int64(l.pas)
 }

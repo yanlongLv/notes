@@ -21,5 +21,5 @@ type rollingCounter struct {
 
 //NewRollingCounter ...
 func NewRollingCounter(opts RollerCounterOpts) rollingCounter {
-
+	window := NewWindow(wi)
 }
