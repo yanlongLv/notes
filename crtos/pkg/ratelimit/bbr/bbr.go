@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/notes/crtos/pkg/stat/metric"
 	cpustat "github.com/notes/crtos/pkg/stat/sys/cpu"
 )
 
@@ -53,6 +54,22 @@ func cpuproc() {
 	}
 }
 
+//BBR ...
 type BBR struct {
-	cpu cpuGetter
+	cpu             cpuGetter
+	passStat        metric.RollingCounter
+	inFlight        int64
+	winBucketPerSec int64
+	conf            *Config
+	prevDrop        atomic.Value
+	prevDropHit     int64
+	rawMaxPASS      int64
+	rawMinRt        int64
+}
+
+func (l *BBR) maxPASS() int64 {
+	rawMaxPass := atomic.LoadInt64(&l.rawMaxPASS)
+	if rawMaxPass > 0 && l.passStat.Timespan() < 1 {
+		return rawMaxPass
+	}
 }
