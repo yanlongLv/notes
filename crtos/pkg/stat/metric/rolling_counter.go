@@ -20,6 +20,6 @@ type rollingCounter struct {
 }
 
 //NewRollingCounter ...
-func NewRollingCounter(opts RollerCounterOpts) rollingCounter {
-	window := NewWindow(wi)
+func NewRollingCounter(opts RollerCounterOpts) RollingCounter {
+	window := NewWindow(WindoeOpts{Size: opts.Size})
 }
