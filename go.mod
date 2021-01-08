@@ -7,6 +7,6 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.20.0
-	github.com/shirou/gopsutil v3.20.11+incompatible // indirect
+	github.com/shirou/gopsutil v3.20.11+incompatible
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 )

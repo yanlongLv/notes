@@ -2,6 +2,7 @@ package bbr
 
 import (
 	"fmt"
+	"math"
 	"sync/atomic"
 	"time"
 
@@ -72,5 +73,28 @@ func (l *BBR) maxPASS() int64 {
 	if rawMaxPass > 0 && l.passStat.Timespan() < 1 {
 		return rawMaxPass
 	}
-	rawMaxPass = int64(l.passStat.Reduce())
+	rawMaxPass = int64(l.passStat.Reduce(func(iterator metric.Iterator) float64 {
+		var result = 1.0
+		for i := 0; iterator.Next() && i < l.conf.WinBucket; i++ {
+			bucket := iterator.Bucket()
+			count := 0.0
+			for _, p := range bucket.Points {
+				count += p
+			}
+			result = math.Max(result, count)
+		}
+		return result
+	}))
+	if rawMaxPass == 0 {
+		rawMaxPass = 1
+	}
+	atomic.StoreInt64(&l.rawMaxPASS, rawMaxPass)
+	return rawMaxPass
+}
+
+func (l *BBR) minRT() int64 {
+	rawMinRt := atomic.LoadInt64(&l.rawMinRt)
+	if rawMinRT > 0 && i < l.conf.WinBucket;i++ {
+		bucket :=iterato=
+	}
 }

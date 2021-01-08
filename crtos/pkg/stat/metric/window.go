@@ -73,6 +73,15 @@ func (w *Window) ResetBuckets(offsets []int) {
 	}
 }
 
+//Add ..
+func (w *Window) Add(offset int, val float64) {
+	if w.window[offset].Count == 0 {
+		w.window[offset].Append(val)
+		return
+	}
+	w.window[offset].Add(0, val)
+}
+
 //Append ..
 func (w *Window) Append(offset int, val float64) {
 	w.window[offset].Append(val)
