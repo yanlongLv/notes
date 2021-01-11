@@ -8,6 +8,7 @@ import (
 	"time"
 
 	// "github.com/go-kratos/kratos/pkg/ecode"
+	"github.com/go-kratos/kratos/pkg/container/group"
 	limit "github.com/notes/crtos/pkg/ratelimit"
 	"github.com/notes/crtos/pkg/stat/metric"
 	cpustat "github.com/notes/crtos/pkg/stat/sys/cpu"
@@ -179,4 +180,49 @@ func (l *BBR) Allow(ctx context.Context, opts ...limit.AllowOption) (func(info l
 			return
 		}
 	}, nil
+}
+
+func newLimiter(conf *Config) limit.Limiter {
+	if conf == nil {
+		conf = defaultConf
+	}
+	size := conf.WinBucket
+	bucketDuration := conf.Window / time.Duration(conf.WinBucket)
+	passStat := metric.NewRollingCounter(metric.RollerCounterOpts{Size: size, BucketDuration: bucketDuration})
+	rtStat := metric.NewRollingCounter(metric.RollerCounterOpts{Size: size, BucketDuration: bucketDuration})
+	cpu := func() int64 {
+		return atomic.LoadInt64(&cpu)
+	}
+	limiter := &BBR{
+		cpu:             cpu,
+		conf:            conf,
+		passStat:        passStat,
+		rtStat:          rtStat,
+		winBucketPerSec: int64(time.Second) / (int64(conf.Window) / int64(conf.WinBucket)),
+	}
+	return limiter
+}
+
+//Group ...
+type Group struct {
+	group *group.Group
+}
+
+//NewGroup ...
+func NewGroup(conf *Config) *Group {
+	if conf == nil {
+		conf = defaultConf
+	}
+	group := group.NewGroup(func() interface{} {
+		return newLimiter(conf)
+	})
+	return &Group{
+		group: group,
+	}
+}
+
+//Get ...
+func (g *Group) Get(key string) limit.Limiter {
+	limiter := g.group.Get(key)
+	return limiter.(limit.Limiter)
 }
