@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	// "github.com/go-kratos/kratos/pkg/ecode"
-	"github.com/go-kratos/kratos/pkg/container/group"
+	"github.com/notes/crtos/container/ecode"
+	"github.com/notes/crtos/container/group"
 	limit "github.com/notes/crtos/pkg/ratelimit"
 	"github.com/notes/crtos/pkg/stat/metric"
 	cpustat "github.com/notes/crtos/pkg/stat/sys/cpu"
@@ -37,15 +37,17 @@ type Config struct {
 
 type cpuGetter func() int64
 
-// func int() {
-// }
+func init() {
+	go cpuproc()
+}
 
+//采集CPU值， 每隔250毫秒
 func cpuproc() {
 	ticker := time.NewTicker(time.Microsecond * 250)
 	defer func() {
 		ticker.Stop()
 		if err := recover(); err != nil {
-			fmt.Errorf("rate/limit cpuproc error", err)
+			fmt.Errorf("rate/limit cpuproc error %v", err)
 			go cpuproc()
 		}
 	}()
@@ -164,7 +166,7 @@ func (l *BBR) Allow(ctx context.Context, opts ...limit.AllowOption) (func(info l
 		opt.Apply(&allowOpts)
 	}
 	if l.shouldDrop() {
-		return nil, nil //ecode.LimitExceed
+		return nil, ecode.LimitExceed
 	}
 	atomic.AddInt64(&l.inFlight, 1)
 	stime := time.Since(initTime)
