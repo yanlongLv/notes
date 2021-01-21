@@ -189,6 +189,9 @@ func newLimiter(conf *Config) limit.Limiter {
 		conf = defaultConf
 	}
 	size := conf.WinBucket
+	// Window:       time.Second * 10,
+	// WinBucket:    10,
+	// CPUThreshold: 800,
 	bucketDuration := conf.Window / time.Duration(conf.WinBucket)
 	passStat := metric.NewRollingCounter(metric.RollerCounterOpts{Size: size, BucketDuration: bucketDuration})
 	rtStat := metric.NewRollingCounter(metric.RollerCounterOpts{Size: size, BucketDuration: bucketDuration})
