@@ -59,3 +59,48 @@ node 里面有文件的读写权限 i_mode，属于哪个用户 i_uid，哪个�
 eh_entries 表示这个节点里面有多少项。这里的项分两种，如果是叶子节点，这一项会直接指向硬盘上的连续块的地址，我们称为数据节点 ext4_extent；如果是分支节点，这一项会指向下一层的分支节点或者叶子节点，我们称为索引节点 ext4_extent_idx。这两种类型的项的大小都是 12 个 byte。  
 除了根节点，其他的节点都保存在一个块 4k 里面，4k 扣除 ext4_extent_header 的 12 个 byte，剩下的能够放 340 项，每个 extent 最大能表示 128MB 的数据，340 个 extent 会使你表示的文件达到 42.5GB。这已经非常大了，如果再大，我们可以增加树的深度。  
 如果我要保存一个数据块，或者要保存一个 inode，我应该放在硬盘上的哪个位置呢？难道需要将所有的 inode 列表和块列表扫描一遍，找个空的地方随便放吗？当然，这样效率太低了。所以在文件系统里面，我们专门弄了一个块来保存 inode 的位图。在这 4k 里面，每一位对应一个 inode。如果是 1，表示这个 inode 已经被用了；如果是 0，则表示没被用。同样，我们也弄了一个块保存 block 的位图
+
+# 网络系统  
+select/poll/epoll都是IO多路复用机制，可以同时监控多个描述符，当某个描述符就绪(读或写就绪)，则立刻通知相应程序进行读或写操作。本质上select/poll/epoll都是同步I/O，即读写是阻塞的。  
+## select
+```
+int select (int maxfd, 
+            fd_set *readfds, 
+            fd_set *writefds, 
+            fd_set *exceptfds, 
+            struct timeval *timeout);
+```
+maxfd：代表要监控的最大文件描述符fd+1  
+writefds：监控可写fd  
+readfds：监控可读fd  
+exceptfds：监控异常fd  
+timeout：超时时长  
+   1. NULL，代表没有设置超时，则会一直阻塞直到文件描述符上的事件触发
+   2. 0，代表不等待，立即返回，用于检测文件描述符状态
+   3. 正整数，代表当指定时间没有事件触发，则超时返回  
+
+select函数监控3类文件描述符，调用select函数后会阻塞，直到描述符fd准备就绪（有数据可读、可写、异常）或者超时，函数便返回。 当select函数返回后，可通过遍历描述符集合，找到就绪的描述符。
+
+### select缺点
+ 1. 文件描述符个数受限：单进程能够监控的文件描述符的数量存在最大限制，在Linux上一般为1024，可以通过修改宏定义增大上限，但同样存在效率低的弱势;
+ 2. 性能衰减严重：IO随着监控的描述符数量增长，其性能会线性下降; 
+
+ ## poll
+
+ ```
+ int poll (struct pollfd *fds, unsigned int nfds, int timeout);
+ ```
+其中pollfd表示监视的描述符集合，如下:
+```
+struct pollfd {
+    int fd; //文件描述符
+    short events; //监视的请求事件
+    short revents; //已发生的事件
+};
+```
+pollfd结构包含了要监视的event和发生的event，并且pollfd并没有最大数量限制。 和select函数一样，当poll函数返回后，可以通过遍历描述符集合，找到就绪的描述符。  
+### poll缺点  
+从上面看select和poll都需要在返回后，通过遍历文件描述符来获取已经就绪的socket。同时连接的大量客户端在同一时刻可能只有很少的处于就绪状态，因此随着监视的描述符数量的增长，其性能会线性下降。
+
+
+http://gityuan.com/2019/01/05/linux-poll-select/
