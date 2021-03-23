@@ -3,7 +3,7 @@
 Group struct
 ```
 type Group struct {
-	mu sync.Mutex  n保证并发
+	mu sync.Mutex  保证并发
 	m  map[string]*call  保存key
 }
 ```
