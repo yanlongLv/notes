@@ -102,5 +102,53 @@ pollfd结构包含了要监视的event和发生的event，并且pollfd并没有�
 ### poll缺点  
 从上面看select和poll都需要在返回后，通过遍历文件描述符来获取已经就绪的socket。同时连接的大量客户端在同一时刻可能只有很少的处于就绪状态，因此随着监视的描述符数量的增长，其性能会线性下降。
 
+## epoll
+epoll是在内核2.6中提出的，是select和poll的增强版。相对于select和poll来说，epoll更加灵活，没有描述符数量限制。epoll使用一个文件描述符管理多个描述符，将用户空间的文件描述符的事件存放到内核的一个事件表中，这样在用户空间和内核空间的copy只需一次。epoll机制是Linux最高效的I/O复用机制，在一处等待多个文件句柄的I/O事件。
+
+select/poll都只有一个方法，epoll操作过程有3个方法，分别是epoll_create()， epoll_ctl()，epoll_wait()。
+
+### epoll_create
+int epoll_create(int size)；
+功能：用于创建一个epoll的句柄，size是指监听的描述符个数， 现在内核支持动态扩展，该值的意义仅仅是初次分配的fd个数，后面空间不够时会动态扩容。 当创建完epoll句柄后，占用一个fd值.
+
+ls /proc/<pid>/fd/  //可通过终端执行，看到该fd
+使用完epoll后，必须调用close()关闭，否则可能导致fd被耗尽。
+
+### epoll_ctl
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)；
+功能：用于对需要监听的文件描述符(fd)执行op操作，比如将fd加入到epoll句柄。
+
+epfd：是epoll_create()的返回值；
+op：表示op操作，用三个宏来表示，分别代表添加、删除和修改对fd的监听事件；
+EPOLL_CTL_ADD(添加)
+EPOLL_CTL_DEL(删除)
+EPOLL_CTL_MOD（修改）
+fd：需要监听的文件描述符；
+epoll_event：需要监听的事件，struct epoll_event结构如下：
+```
+  struct epoll_event {
+    __uint32_t events;  /* Epoll事件 */
+    epoll_data_t data;  /*用户可用数据*/
+  };
+```
+events可取值：(表示对应的文件描述符的操作)
+
+EPOLLIN ：可读（包括对端SOCKET正常关闭）；
+EPOLLOUT：可写；
+EPOLLERR：错误；
+EPOLLHUP：中断；
+EPOLLPRI：高优先级的可读（这里应该表示有带外数据到来）；
+EPOLLET： 将EPOLL设为边缘触发模式，这是相对于水平触发来说的。
+EPOLLONESHOT：只监听一次事件，当监听完这次事件之后就不再监听该事件
+### epoll_wait
+int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout);
+功能：等待事件的上报
+
+epfd：等待epfd上的io事件，最多返回maxevents个事件；
+events：用来从内核得到事件的集合；
+maxevents：events数量，该maxevents值不能大于创建epoll_create()时的size；
+timeout：超时时间（毫秒，0会立即返回）。
+该函数返回需要处理的事件数目，如返回0表示已超时。
+
 
 http://gityuan.com/2019/01/05/linux-poll-select/
